@@ -169,7 +169,6 @@ Latest recorded test result: **55 passed**.
 ├── docker-compose.yml
 ├── requirements.txt
 ├── openapi.yaml
-├── openapi-local.json
 └── README.md
 ```
 
