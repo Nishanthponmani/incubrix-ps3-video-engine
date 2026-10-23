@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+outputs/*
+!outputs/.gitkeep
+assets/clips/*
+!assets/clips/.gitkeep
+docker-build.log
+openapi-local.json
+assets/voice.wav

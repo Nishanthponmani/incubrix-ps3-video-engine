@@ -1,0 +1,13 @@
+﻿services:
+  incubrix-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: incubrix-ps3-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.example
+    volumes:
+      - ./outputs:/app/outputs
+    restart: unless-stopped

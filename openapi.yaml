@@ -1,0 +1,353 @@
+openapi: 3.1.0
+info:
+  title: INCUBRIX Script-to-B-roll Video Engine
+  description: API for planning and rendering narrated B-roll videos.
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /ready:
+    get:
+      summary: Ready
+      operationId: ready_ready_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1:
+    get:
+      summary: Api Info
+      operationId: api_info_api_v1_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/plan:
+    post:
+      summary: Create Scene Plan
+      operationId: create_scene_plan_api_v1_plan_post
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/script:
+    post:
+      summary: Process Script
+      operationId: process_script_api_v1_script_post
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/render:
+    post:
+      summary: Render Project
+      operationId: render_project_api_v1_render_post
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenderRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/broll/jobs:
+    post:
+      summary: Create Broll Job
+      operationId: create_broll_job_api_v1_broll_jobs_post
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrollJobRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/jobs/{job_id}:
+    get:
+      summary: Get Job Status
+      operationId: get_job_status_api_v1_jobs__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    BrollJobRequest:
+      properties:
+        script:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Script
+        audio_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Audio Url
+        scenes:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Scenes
+        voice:
+          type: string
+          title: Voice
+          default: en-IN-female
+        aspect_ratios:
+          items:
+            type: string
+            enum:
+            - '16:9'
+            - '9:16'
+            - '1:1'
+          type: array
+          title: Aspect Ratios
+        style:
+          type: string
+          title: Style
+          default: bright, modern, real-world footage
+        avoid:
+          items:
+            type: string
+          type: array
+          title: Avoid
+        captions:
+          additionalProperties: true
+          type: object
+          title: Captions
+        words_per_minute:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Words Per Minute
+          default: 150
+        minimum_scene_seconds:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Minimum Scene Seconds
+          default: 2.0
+      type: object
+      title: BrollJobRequest
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    RenderRequest:
+      properties:
+        script:
+          type: string
+          minLength: 1
+          title: Script
+          description: The script to split into timed scenes.
+        words_per_minute:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Words Per Minute
+          default: 150
+        minimum_scene_seconds:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Minimum Scene Seconds
+          default: 2.0
+        aspect_ratio:
+          type: string
+          enum:
+          - '16:9'
+          - '9:16'
+          - '1:1'
+          title: Aspect Ratio
+          description: Output video aspect ratio.
+          default: '16:9'
+        aspect_ratios:
+          anyOf:
+          - items:
+              type: string
+              enum:
+              - '16:9'
+              - '9:16'
+              - '1:1'
+            type: array
+          - type: 'null'
+          title: Aspect Ratios
+        narration_audio_path:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Narration Audio Path
+        transcription_segments:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Transcription Segments
+      type: object
+      required:
+      - script
+      title: RenderRequest
+    ScriptRequest:
+      properties:
+        script:
+          type: string
+          minLength: 1
+          title: Script
+          description: The script to split into timed scenes.
+        words_per_minute:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Words Per Minute
+          default: 150
+        minimum_scene_seconds:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Minimum Scene Seconds
+          default: 2.0
+      type: object
+      required:
+      - script
+      title: ScriptRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
