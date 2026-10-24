@@ -802,7 +802,7 @@ def get_job_status(job_id: str):
                 "message": "The job ID format is invalid.",
             },
         )
-
+    job_id = job_id.lower()
     # Check both locations: the normal application folder and
     # the relative jobs folder used by the test.
     possible_paths = [
