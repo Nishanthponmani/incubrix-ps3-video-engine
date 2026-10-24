@@ -72,3 +72,63 @@ def test_audio_cleanup_runs_after_background_job():
             pass
 
     unlink.assert_called_once_with(missing_ok=True)
+
+
+
+def test_unverified_clip_blocks_rendering(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+    from unittest.mock import Mock
+
+    import app.main as main
+
+    job_id = "a" * 32
+    output_dir = tmp_path / "outputs" / "jobs" / job_id
+    output_dir.mkdir(parents=True)
+
+    clip_path = tmp_path / "unverified_clip.mp4"
+    clip_path.write_bytes(b"placeholder")
+
+    narration_path = tmp_path / "narration.wav"
+    narration_path.write_bytes(b"placeholder")
+
+    request = Mock()
+    request.transcription_segments = []
+    request.minimum_scene_seconds = 2
+    request.script = "A patient receives medical care."
+    request.words_per_minute = 150
+    request.narration_audio_path = str(narration_path)
+    request.aspect_ratios = ["16:9"]
+    request.aspect_ratio = "16:9"
+
+    scenes = [{
+        "scene_id": 1,
+        "text": "A patient receives medical care.",
+        "duration": 3,
+    }]
+
+    assets = [{
+        "status": "matched",
+        "clip_path": str(clip_path),
+        "license_verified": False,
+    }]
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(main, "plan_scenes", lambda **kwargs: scenes)
+    monkeypatch.setattr(
+        main,
+        "export_project",
+        lambda *args, **kwargs: {"assets": assets},
+    )
+
+    render_mock = Mock()
+    monkeypatch.setattr(main, "render_scenes", render_mock)
+
+    main.process_render_job(job_id, request)
+
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert manifest["status"] == "needs_assets"
+    assert manifest["rendered"] is False
+    assert render_mock.call_count == 0

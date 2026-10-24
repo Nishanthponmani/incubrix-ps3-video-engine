@@ -169,25 +169,42 @@ def select_broll(scenes, clips_dir="assets/clips"):
         for clip in clips:
             if clip.name in used_clips:
                 continue
-
-            #filename_words = normalize_words(clip.stem)
             metadata = load_clip_metadata(clip)
 
             description_words = normalize_words(
-            metadata.get("description", "")
+                metadata.get("description", "")
             )
 
-            filename_words = normalize_words(clip.stem) | description_words
+            filename_words = normalize_words(clip.stem)
+            searchable_words = filename_words | description_words
+
+            # Exact scene keywords take priority over broad aliases.
+            exact_matches = keyword_set & searchable_words
+
             expanded_keywords = set(keyword_set)
-
             for keyword in keyword_set:
-                expanded_keywords.update(KEYWORD_ALIASES.get(keyword, set()))
+                expanded_keywords.update(
+                    KEYWORD_ALIASES.get(keyword, set())
+                )
 
-            matches = expanded_keywords & filename_words
+            alias_matches = (
+                expanded_keywords & searchable_words
+            ) - exact_matches
 
-            if len(matches) > len(best_matches):
+            # Exact matches carry more weight than alias matches.
+            score = len(exact_matches) * 3 + len(alias_matches)
+
+            current_score = (
+                len(best_matches & keyword_set) * 3
+                + len(best_matches - keyword_set)
+            )
+
+            matches = exact_matches | alias_matches
+
+            if best_clip is None or score > current_score:
                 best_clip = clip
                 best_matches = matches
+
 
         if best_clip is None or not best_matches:
             results.append({

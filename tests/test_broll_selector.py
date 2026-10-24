@@ -119,3 +119,42 @@ def test_incomplete_licence_metadata_is_not_verified(tmp_path):
     assert result[0]["source_url"] == "https://example.com/clip"
     assert result[0]["creator"] == "Example creator"
     assert result[0]["license_verified"] is False
+
+def test_prefers_patient_care_clip_for_patient_care_scene(tmp_path):
+    clips_dir = tmp_path / "clips"
+    clips_dir.mkdir()
+
+    robotic_clip = clips_dir / "robotic_surgery.mp4"
+    robotic_clip.write_bytes(b"test video")
+    robotic_clip.with_suffix(".json").write_text(
+        json.dumps({
+            "source": "Example source",
+            "license": "Example licence",
+            "attribution": "Example creator",
+            "description": "Robotic surgical procedure and medical technology.",
+            "license_verified": False,
+        }),
+        encoding="utf-8",
+    )
+
+    patient_clip = clips_dir / "patient_care.mp4"
+    patient_clip.write_bytes(b"test video")
+    patient_clip.with_suffix(".json").write_text(
+        json.dumps({
+            "source": "Example source",
+            "license": "Example licence",
+            "attribution": "Example creator",
+            "description": "A patient listening to a healthcare professional.",
+            "license_verified": False,
+        }),
+        encoding="utf-8",
+    )
+
+    result = select_broll(
+        [{"search_terms": ["patient", "care", "healthcare professional"]}],
+        clips_dir=str(clips_dir),
+    )
+
+    assert result[0]["status"] == "matched"
+    assert result[0]["clip_path"] == str(patient_clip)
+    assert result[0]["license_verified"] is False
