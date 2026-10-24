@@ -59,11 +59,19 @@ def export_project(scenes, narration_path, output_dir="outputs"):
         "\n\n".join(subtitle_blocks) + ("\n" if subtitle_blocks else ""),
         encoding="utf-8",
     )
+    # 2. Select local B-roll clips before building the timeline.
+    broll_results = select_broll(scenes)
+    assets_by_scene = {
+        item["scene_index"]: item
+        for item in broll_results
+    }
 
-    # 2. Generate the timeline.
+    # 3. Generate the timeline with B-roll metadata.
     timeline_scenes = []
 
-    for scene in scenes:
+    for index, scene in enumerate(scenes, start=1):
+        asset = assets_by_scene.get(index, {})
+
         timeline_scenes.append({
             "scene_id": scene_value(scene, "scene_id"),
             "text": scene_value(scene, "text", ""),
@@ -71,6 +79,17 @@ def export_project(scenes, narration_path, output_dir="outputs"):
             "end_time": scene_value(scene, "end_time", 0),
             "duration": scene_value(scene, "duration", 0),
             "search_terms": scene_value(scene, "search_terms", []),
+            "selected_clip": asset.get("clip_path"),
+            "asset_status": asset.get("status", "missing"),
+            "matched_keywords": asset.get("matched_keywords", []),
+            "source": asset.get("source"),
+            "license": asset.get("license"),
+            "attribution": asset.get("attribution"),
+            "source_url": asset.get("source_url"),
+            "creator": asset.get("creator"),
+            "description": asset.get("description", ""),
+            "license_verified": asset.get("license_verified", False),
+            "verification_reason": asset.get("verification_reason"),
         })
 
     total_duration = max(
@@ -90,8 +109,7 @@ def export_project(scenes, narration_path, output_dir="outputs"):
         encoding="utf-8",
     )
 
-    # 3. Select local B-roll clips.
-    broll_results = select_broll(scenes)
+    
 
     # 4. Check whether every scene has a matched, verified asset.
     all_assets_ready = (

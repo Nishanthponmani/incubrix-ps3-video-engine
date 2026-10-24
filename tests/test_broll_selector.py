@@ -84,7 +84,8 @@ def test_reads_clip_licence_metadata(tmp_path):
     assert result[0]["source"] == "Example source"
     assert result[0]["license"] == "Example licence"
     assert result[0]["attribution"] == "Example creator"
-    assert result[0]["license_verified"] is True
+    assert result[0]["license_verified"] is False
+    assert "independent verification" in result[0]["verification_reason"].lower()
     assert result[0]["source_url"] == "https://example.com/clip"
     assert result[0]["creator"] == "Example creator"
 

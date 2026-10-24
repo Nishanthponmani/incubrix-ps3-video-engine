@@ -89,24 +89,19 @@ def load_clip_metadata(clip_path):
         for value in (source, license_name, attribution)
     )
 
-    explicitly_verified = metadata.get("license_verified") is True
+    explicitly_verified = False
 
     verified = required_fields_present and explicitly_verified
 
-    if verified:
-        reason = (
-            "Metadata fields are present and verification is declared. "
-            "The original source and licence terms still require review."
-        )
-    elif not required_fields_present:
+    if not required_fields_present:
         reason = (
             "Source, licence, and attribution must all contain "
             "meaningful values."
         )
     else:
         reason = (
-            "Licence verification has not been explicitly confirmed "
-            "in the metadata."
+            "Metadata fields are present, but independent verification "
+            "of the original source and licence terms is still required."
         )
 
     return {
